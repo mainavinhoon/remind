@@ -1,26 +1,265 @@
-@import "tailwindcss";
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg:          #ffffff;
+  --fg:          #000000;
+  --muted:       #666666;
+  --subtle:      #999999;
+  --border:      #000000; /* Sharp black borders */
+  --accent:      #0052cc; /* Developer blue */
+  --accent-bg:   #f0f7ff;
+  --error:       #d73a49;
+  --mono: "JetBrains Mono", "Fira Mono", "Roboto Mono", monospace;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", sans-serif;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+html, body { 
+  height: 100%; 
+  background: var(--bg); 
+  color: var(--fg); 
+  font-family: var(--sans); 
+  font-size: 13px; /* Slightly smaller, technical feel */
+  -webkit-font-smoothing: antialiased; 
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ── Full-screen shell ── */
+.shell {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  width: 100%;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* ── Topbar (Flat) ── */
+.topbar {
+  flex-shrink: 0;
+  height: 40px;
+  border-bottom: 1px solid var(--fg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.topbar-inner {
+  width: clamp(320px, 88%, 1100px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.logo {
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--fg);
+  text-transform: lowercase;
+}
+.logo .slug { color: var(--muted); font-weight: 400; }
+
+.topbar-right {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  color: var(--muted);
+}
+
+/* ── Main ── */
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow-y: auto;
+  padding: 0;
+  width: clamp(320px, 88%, 1100px);
+  margin: 0 auto;
+  align-self: center;
+}
+
+/* Active reminder (Minimalist Box) */
+.bubble-wrap { margin-bottom: 32px; }
+
+.bubble {
+  display: inline-block;
+  background: #fff;
+  border: 2px solid var(--fg); /* Thick raw borders */
+  padding: 12px 16px;
+  max-width: min(88%, 600px);
+}
+
+.bubble-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+  font-family: var(--mono);
+}
+
+.bubble-tag {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #fff;
+  background: var(--fg);
+  padding: 2px 4px;
+}
+
+.bubble-clock {
+  font-size: 0.8rem;
+  color: var(--fg);
+  font-variant-numeric: tabular-nums;
+  flex: 1;
+}
+
+.btn-cancel {
+  font-size: 0.7rem;
+  color: var(--muted);
+  background: none; border: none;
+  cursor: pointer; font-family: var(--mono); padding: 0;
+  text-decoration: underline;
+}
+.btn-cancel:hover { color: var(--error); }
+
+.bubble-body {
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--fg);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ── Compose ── */
+.compose {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.compose-placeholder {
+  position: absolute;
+  top: 50%;
+  left: 0; right: 0;
+  transform: translateY(-50%);
+  pointer-events: none;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 1.2rem;
+  color: #ccc;
+  user-select: none;
+}
+
+.compose-textarea {
+  width: 100%;
+  height: auto;
+  min-height: 1.5em;
+  max-height: 60vh;
+  font-family: var(--mono); /* Fully mono for that dev feel */
+  font-size: 1.1rem;
+  color: var(--fg);
+  background: transparent;
+  border: none;
+  outline: none;
+  resize: none;
+  line-height: 1.6;
+  caret-color: var(--fg);
+  text-align: center; /* Center the typing too */
+}
+.compose-textarea::placeholder { color: transparent; }
+
+/* ── Bottom Section ── */
+.bottom-wrap {
+  flex-shrink: 0;
+  padding: 24px 0 40px;
+  width: clamp(320px, 88%, 1100px);
+  margin: 0 auto;
+  align-self: center;
+}
+
+.bottom-card {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border: 1px solid var(--fg); /* Flat border instead of shadow */
+  padding: 8px;
+  gap: 12px;
+}
+
+.delay-input {
+  flex: 1;
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  color: var(--fg);
+  background: transparent;
+  border: none;
+  outline: none;
+  padding: 4px 8px;
+}
+.delay-input::placeholder {
+  color: #bbb;
+  font-style: italic;
+}
+
+/* Inline notifications */
+.notif-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  background: var(--fg);
+  color: #fff;
+  border: none;
+  padding: 6px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.notif-chip:hover { opacity: 0.8; }
+.notif-chip .ndot { width: 5px; height: 5px; background: #fff; border-radius: 50%; }
+
+/* Create Button (Brutalist) */
+.btn-create {
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #fff;
+  background: var(--accent);
+  border: none;
+  padding: 8px 24px;
+  cursor: pointer;
+  text-transform: uppercase;
+}
+.btn-create:hover:not(:disabled) { background: #0044aa; }
+.btn-create:disabled { background: #eee; color: #ccc; cursor: not-allowed; }
+
+.status-msg {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  margin-top: 12px;
+  font-weight: 700;
+}
+.status-msg.ok { color: var(--accent); }
+.status-msg.err { color: var(--error); }
+
+.bottom-hint {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  color: #999;
+  margin-top: 12px;
+  display: flex;
+  gap: 16px;
+}
+.hint-link {
+  background: none; border: none; font-family: inherit;
+  font-size: inherit; color: var(--fg); cursor: pointer;
+  text-decoration: underline;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+.spinner { width: 10px; height: 10px; border: 2px solid #fff; border-top-color: transparent; border-radius: 50%; animation: spin 0.6s linear infinite; display: inline-block; margin-right: 8px; }
+
+@media (max-width: 600px) {
+  .topbar-inner { padding: 0 16px; }
+  .bottom-wrap { padding: 16px; }
+  .compose-textarea { font-size: 1rem; }
 }
