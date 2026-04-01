@@ -3,15 +3,18 @@ import { getRedis } from "@/lib/redis";
 import webpush from "web-push";
 import { verifySignatureAppRouter } from "@upstash/qstash/nextjs";
 
-export const runtime = "nodejs"; // web-push requires Node runtime
+import { VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT } from "@/lib/vapid";
 
-webpush.setVapidDetails(
-  process.env.VAPID_SUBJECT ?? "mailto:hello@remnd.com",
-  process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
-  process.env.VAPID_PRIVATE_KEY!
-);
+export const runtime = "nodejs"; 
 
 async function handler(req: NextRequest) {
+  if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
+    console.error("[notify] Missing VAPID keys. Skipping notification.");
+    return NextResponse.json({ error: "VAPID keys not configured" }, { status: 500 });
+  }
+
+  webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
+
   try {
     const { path, redisKey } = await req.json();
 
