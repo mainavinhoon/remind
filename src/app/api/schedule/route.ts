@@ -2,9 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { getRedis } from "@/lib/redis";
 import { Client } from "@upstash/qstash";
 
-export const runtime = "nodejs";
+export const runtime = "edge";
 
-const qstash = new Client({   baseUrl: process.env.QSTASH_UR, token: process.env.QSTASH_TOKEN! });
+const qstash = new Client({
+  token: process.env.QSTASH_TOKEN!,
+});
 
 export async function POST(req: NextRequest) {
   try {

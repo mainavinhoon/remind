@@ -5,7 +5,7 @@ import { verifySignatureAppRouter } from "@upstash/qstash/nextjs";
 
 import { VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT } from "@/lib/vapid";
 
-export const runtime = "nodejs"; 
+export const runtime = "edge"; 
 
 async function handler(req: NextRequest) {
   if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {

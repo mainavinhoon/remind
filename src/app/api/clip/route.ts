@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getRedis } from "@/lib/redis";
 
+export const runtime = "edge"; 
+
 // 7-day clipboard TTL
 const CLIP_TTL = 60 * 60 * 24 * 7;
 
