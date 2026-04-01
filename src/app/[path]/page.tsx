@@ -1,6 +1,8 @@
 import { getRedis } from "@/lib/redis";
 import RemindClient from "./RemindClient";
 
+export const runtime = "edge";
+
 interface Props { params: Promise<{ path: string }> }
 
 export default async function RemindPage({ params }: Props) {
