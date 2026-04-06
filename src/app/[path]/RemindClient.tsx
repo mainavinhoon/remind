@@ -67,6 +67,13 @@ export default function RemindClient({ path, initialContent }: Props) {
     el.style.height = el.scrollHeight + "px";
   };
 
+  // Resize on initial load if there's loaded content
+  useEffect(() => {
+    if (textareaRef.current) {
+      autoResize(textareaRef.current);
+    }
+  }, []);
+
   // ── Restore active reminder ───────────────────────────────────────────────
   useEffect(() => {
     const st = localStorage.getItem(storageKey);
