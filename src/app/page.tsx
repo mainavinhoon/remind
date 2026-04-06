@@ -36,7 +36,7 @@ export default function HomePage() {
       </p>
 
       <h1 style={{ fontSize: "1.4rem", fontWeight: 400, color: "#000", textAlign: "center", marginBottom: "32px", letterSpacing: "-0.01em" }}>
-        where <span style={{ textDecoration: "underline" }}>do you want to</span> remember things?
+        where do you want to remember things?
       </h1>
 
       <div style={{ border: "2px solid #000", padding: "16px", width: "100%", maxWidth: "480px" }}>
