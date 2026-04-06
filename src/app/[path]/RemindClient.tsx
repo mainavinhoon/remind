@@ -2,33 +2,51 @@
 
 import { useEffect, useRef, useState } from "react";
 import { subscribeToPush } from "@/lib/push";
+import * as chrono from "chrono-node";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-function parseDelay(raw: string): number | null {
+
+function parseDateInput(raw: string): Date | null {
+  if (!raw.trim()) return null;
   const s = raw.trim().toLowerCase();
-  if (!s) return null;
-  const hM = s.match(/(\d+)\s*h(?:our)?s?/);
-  const mM = s.match(/(\d+)\s*m(?:in(?:ute)?s?)?(?!\s*s)/);
-  const sM = s.match(/(\d+)\s*s(?:ec(?:ond)?s?)?/);
-  const h = hM ? parseInt(hM[1]) : 0;
-  const m = mM ? parseInt(mM[1]) : 0;
-  const sc = sM ? parseInt(sM[1]) : 0;
-  const total = h * 3600 + m * 60 + sc;
-  if (total > 0) return total;
-  const plain = parseInt(s);
-  if (!isNaN(plain) && plain > 0) return plain * 60;
-  return null;
+
+  // 1. First try simple shorthands like "30m", "2h", "45s" just in case chrono misses them alone.
+  const hM = s.match(/^(\d+)\s*h(?:our)?s?$/);
+  const mM = s.match(/^(\d+)\s*m(?:in(?:ute)?s?)?$/);
+  const sM = s.match(/^(\d+)\s*s(?:ec(?:ond)?s?)?$/);
+  
+  let delaySec: number | null = null;
+  if (hM) delaySec = parseInt(hM[1]) * 3600;
+  else if (mM) delaySec = parseInt(mM[1]) * 60;
+  else if (sM) delaySec = parseInt(sM[1]);
+  else {
+    const plain = parseInt(s);
+    if (!isNaN(plain) && plain.toString() === s && plain > 0) delaySec = plain * 60;
+  }
+
+  if (delaySec !== null && delaySec > 0) {
+    return new Date(Date.now() + delaySec * 1000);
+  }
+
+  // 2. If it's natural language like "tomorrow at 7pm", use chrono
+  return chrono.parseDate(raw);
 }
 
 function fmtDelay(sec: number) {
-  const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
-  return [h && `${h}h`, m && `${m}m`, s && `${s}s`].filter(Boolean).join(" ");
+  const d = Math.floor(sec / 86400);
+  const h = Math.floor((sec % 86400) / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  const s = sec % 60;
+  return [d && `${d}d`, h && `${h}h`, m && `${m}m`, s && `${s}s`].filter(Boolean).join(" ");
 }
 
 function fmtCountdown(ms: number) {
   const t = Math.max(0, Math.floor(ms / 1000));
-  return [Math.floor(t / 3600), Math.floor((t % 3600) / 60), t % 60]
+  const d = Math.floor(t / 86400);
+  const rT = t % 86400;
+  const str = [Math.floor(rT / 3600), Math.floor((rT % 3600) / 60), rT % 60]
     .map((v) => String(v).padStart(2, "0")).join(":");
+  return d > 0 ? `${d}d ${str}` : str;
 }
 
 function timeAgo(ts: number) {
@@ -50,6 +68,7 @@ export default function RemindClient({ path, initialContent }: Props) {
   const [content, setContent]         = useState(initialContent);
   const [delayRaw, setDelayRaw]       = useState("");
   const [delayErr, setDelayErr]       = useState(false);
+  const [parsedDate, setParsedDate]   = useState<Date | null>(null);
   const [notifStatus, setNotifStatus] = useState<"unknown"|"granted"|"denied">("unknown");
   const [active, setActive]           = useState<ActiveReminder | null>(null);
   const [loading, setLoading]         = useState(false);
@@ -128,6 +147,36 @@ export default function RemindClient({ path, initialContent }: Props) {
     return sub;
   };
 
+  // ── Handle Delay Change & Validation ──────────────────────────────────────
+  const handleDelayChange = (value: string) => {
+    setDelayRaw(value);
+    
+    if (!value.trim()) {
+      setDelayErr(false);
+      setParsedDate(null);
+      return;
+    }
+
+    const date = parseDateInput(value);
+    if (!date) {
+      setDelayErr(true);
+      setParsedDate(null);
+      return;
+    }
+
+    const diff = date.getTime() - Date.now();
+    const maxDays = 7 * 24 * 3600 * 1000;
+    
+    // Valid if it's in the future and strictly under 7 days (QStash limitations)
+    if (diff > 5000 && diff <= maxDays) {
+      setDelayErr(false);
+      setParsedDate(date);
+    } else {
+      setDelayErr(true);
+      setParsedDate(date); // We keep it to show the user exactly why it failed (e.g. "past date" or "too far")
+    }
+  };
+
   // ── Create — handles both clipboard save and optional reminder ────────────
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -135,7 +184,10 @@ export default function RemindClient({ path, initialContent }: Props) {
 
     if (!content.trim()) { textareaRef.current?.focus(); return; }
 
-    const delay = parseDelay(delayRaw);
+    const delay = parsedDate ? Math.floor((parsedDate.getTime() - Date.now()) / 1000) : null;
+    
+    // Block create if there is text in delay box but it's invalid
+    if (delayRaw.trim() && delayErr) { return; }
     if (delayRaw.trim() && !delay) { setDelayErr(true); return; }
 
     setLoading(true);
@@ -149,7 +201,7 @@ export default function RemindClient({ path, initialContent }: Props) {
       if (clipRes.ok) { setClipSavedAt(Date.now()); setClipLoaded(true); }
 
       // If a delay is set, also schedule a reminder
-      if (delay) {
+      if (delay && delay > 0) {
         const sub = await getSubscription();
         if (!sub) {
           setMsg({ type: "err", text: "Notification permission denied — reminder not set. Content was saved." });
@@ -168,6 +220,7 @@ export default function RemindClient({ path, initialContent }: Props) {
         localStorage.setItem(storageKey, JSON.stringify({ content: content.trim(), fireAt }));
         setActive({ content: content.trim(), fireAt });
         setDelayRaw("");
+        setParsedDate(null);
         setMsg({ type: "ok", text: `Saved + reminder in ${fmtDelay(delay)}.` });
       } else {
         setMsg({ type: "ok", text: "Saved to this URL." });
@@ -250,19 +303,36 @@ export default function RemindClient({ path, initialContent }: Props) {
             id="reminder-delay"
             type="text"
             className={`delay-input${delayErr ? " err" : ""}`}
-            placeholder="want a reminder? try 30m, 1h, 2h30m…"
+            placeholder="want a reminder? try tomorrow 7pm, or 30m, 1h, 2h30m…"
             value={delayRaw}
-            onChange={(e) => { setDelayRaw(e.target.value); setDelayErr(false); }}
+            onChange={(e) => handleDelayChange(e.target.value)}
             disabled={loading}
             autoComplete="off"
           />
 
+          {/* Show visual feedback for parsed natural language date */}
+          {delayRaw.trim() && parsedDate && (
+             <span className="date-hint" style={{ fontSize: "0.75rem", display: "block", color: delayErr ? "var(--error)" : "var(--fg)", opacity: 0.7, marginTop: 4 }}>
+                {parsedDate.getTime() <= Date.now() 
+                  ? "Date must be in the future"
+                  : parsedDate.getTime() > Date.now() + 7 * 24 * 3600 * 1000
+                    ? "Max reminder limit is 7 days"
+                    : `Reminding: ${new Intl.DateTimeFormat('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }).format(parsedDate)}`}
+             </span>
+          )}
+          {delayRaw.trim() && !parsedDate && delayErr && (
+            <span className="date-hint" style={{ fontSize: "0.75rem", display: "block", color: "var(--error)", opacity: 0.7, marginTop: 4 }}>
+                Invalid time format
+            </span>
+          )}
+
           {/* Show enable-notifications chip inline when delay is typed + not yet granted */}
-          {delayRaw.trim() && notifStatus !== "granted" && notifStatus !== "denied" && (
+          {delayRaw.trim() && !delayErr && notifStatus !== "granted" && notifStatus !== "denied" && (
             <button
               type="button"
               className="notif-chip"
               id="enable-notifications"
+              style={{ marginTop: 8 }}
               onClick={async () => {
                 const sub = await getSubscription();
                 if (sub) setNotifStatus("granted");
@@ -273,7 +343,7 @@ export default function RemindClient({ path, initialContent }: Props) {
             </button>
           )}
           {delayRaw.trim() && notifStatus === "denied" && (
-            <span style={{ fontSize: "0.7rem", color: "var(--error)", flexShrink: 0, whiteSpace: "nowrap" }}>
+            <span style={{ fontSize: "0.7rem", color: "var(--error)", flexShrink: 0, whiteSpace: "nowrap", marginTop: 8, display: "block" }}>
               Notifications blocked
             </span>
           )}
@@ -282,7 +352,8 @@ export default function RemindClient({ path, initialContent }: Props) {
             type="submit"
             id="create-btn"
             className="btn-create"
-            disabled={!canCreate}
+            disabled={!canCreate || (!!delayRaw.trim() && delayErr)}
+            style={{ marginTop: 8 }}
           >
             {loading ? <><span className="spinner" />Saving…</> : "Create"}
           </button>
@@ -298,3 +369,4 @@ export default function RemindClient({ path, initialContent }: Props) {
     </div>
   );
 }
+

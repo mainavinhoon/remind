@@ -12,6 +12,7 @@
     "@block65/webcrypto-web-push": "^1.0.0",
     "@upstash/qstash": "^2.10.1",
     "@upstash/redis": "^1.37.0",
+    "chrono-node": "^2.9.0",
     "lucide-react": "^1.6.0",
     "next": "16.2.1",
     "react": "19.2.4",
