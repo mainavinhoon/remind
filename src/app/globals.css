@@ -75,6 +75,12 @@ html, body {
   align-self: center;
 }
 
+/* Align to top if content is big */
+.main.is-long {
+  justify-content: flex-start;
+  padding-top: 40px;
+}
+
 /* Active reminder (Minimalist Box) */
 .bubble-wrap { margin-bottom: 32px; }
 
@@ -166,6 +172,12 @@ html, body {
   text-align: center; /* Center the typing too */
 }
 .compose-textarea::placeholder { color: transparent; }
+
+/* Align text to left if content is big */
+.main.is-long .compose-textarea,
+.main.is-long .compose-placeholder {
+  text-align: left;
+}
 
 /* ── Bottom Section ── */
 .bottom-wrap {
@@ -263,3 +275,5 @@ html, body {
   .bottom-wrap { padding: 16px; }
   .compose-textarea { font-size: 1rem; }
 }
+
+

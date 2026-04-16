@@ -240,6 +240,7 @@ export default function RemindClient({ path, initialContent }: Props) {
 
   const canCreate = !loading && !!content.trim();
   const savedHint = clipSavedAt ? `Saved ${timeAgo(clipSavedAt)}` : clipLoaded ? "Loaded" : null;
+  const isLong = content.length > 80 || content.split("\n").length > 1;
 
   return (
     <div className="shell">
@@ -252,7 +253,7 @@ export default function RemindClient({ path, initialContent }: Props) {
       </header>
 
       {/* Main */}
-      <main className="main">
+      <main className={`main ${isLong ? "is-long" : ""}`}>
         {/* Active reminder bubble */}
         {active && (
           <div className="bubble-wrap">
@@ -369,4 +370,6 @@ export default function RemindClient({ path, initialContent }: Props) {
     </div>
   );
 }
+
+
 
