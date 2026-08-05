@@ -13,6 +13,17 @@
   --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", sans-serif;
 }
 
+[data-theme='dark'] {
+  --bg:          #0e0e0e;
+  --fg:          #efefef;
+  --muted:       #888888;
+  --subtle:      #666666; /* Lightened to make placeholder visible */
+  --border:      #efefef;
+  --accent:      #58a6ff;
+  --accent-bg:   #161b22;
+  --error:       #f85149;
+}
+
 html, body { 
   height: 100%; 
   background: var(--bg); 
@@ -34,7 +45,7 @@ html, body {
 .topbar {
   flex-shrink: 0;
   height: 40px;
-  border-bottom: 1px solid var(--fg);
+  border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -62,6 +73,32 @@ html, body {
   color: var(--muted);
 }
 
+.align-controls {
+  display: flex;
+  gap: 4px;
+}
+
+.align-btn {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+.align-btn:hover {
+  background: var(--accent-bg);
+  color: var(--fg);
+}
+.align-btn.active {
+  color: var(--fg);
+  background: var(--accent-bg);
+}
+
 /* ── Main ── */
 .main {
   flex: 1;
@@ -86,8 +123,8 @@ html, body {
 
 .bubble {
   display: inline-block;
-  background: #fff;
-  border: 2px solid var(--fg); /* Thick raw borders */
+  background: var(--bg);
+  border: 2px solid var(--border); /* Thick raw borders */
   padding: 12px 16px;
   max-width: min(88%, 600px);
 }
@@ -104,7 +141,7 @@ html, body {
   font-size: 0.65rem;
   font-weight: 700;
   text-transform: uppercase;
-  color: #fff;
+  color: var(--bg);
   background: var(--fg);
   padding: 2px 4px;
 }
@@ -151,7 +188,7 @@ html, body {
   text-align: center;
   font-family: var(--mono);
   font-size: 1.2rem;
-  color: #ccc;
+  color: var(--subtle);
   user-select: none;
 }
 
@@ -186,13 +223,14 @@ html, body {
   width: clamp(320px, 88%, 1100px);
   margin: 0 auto;
   align-self: center;
+  position: relative;
 }
 
 .bottom-card {
   display: flex;
   align-items: center;
-  background: #fff;
-  border: 1px solid var(--fg); /* Flat border instead of shadow */
+  background: var(--bg);
+  border: 1px solid var(--border); /* Flat border instead of shadow */
   padding: 8px;
   gap: 12px;
 }
@@ -208,8 +246,9 @@ html, body {
   padding: 4px 8px;
 }
 .delay-input::placeholder {
-  color: #bbb;
+  color: var(--subtle);
   font-style: italic;
+  opacity: 0.5;
 }
 
 /* Inline notifications */
@@ -220,14 +259,14 @@ html, body {
   font-family: var(--mono);
   font-size: 0.7rem;
   background: var(--fg);
-  color: #fff;
+  color: var(--bg);
   border: none;
   padding: 6px 12px;
   cursor: pointer;
   white-space: nowrap;
 }
 .notif-chip:hover { opacity: 0.8; }
-.notif-chip .ndot { width: 5px; height: 5px; background: #fff; border-radius: 50%; }
+.notif-chip .ndot { width: 5px; height: 5px; background: var(--bg); border-radius: 50%; }
 
 /* Create Button (Brutalist) */
 .btn-create {
@@ -242,7 +281,7 @@ html, body {
   text-transform: uppercase;
 }
 .btn-create:hover:not(:disabled) { background: #0044aa; }
-.btn-create:disabled { background: #eee; color: #ccc; cursor: not-allowed; }
+.btn-create:disabled { background: var(--subtle); color: var(--muted); cursor: not-allowed; opacity: 0.3; }
 
 .status-msg {
   font-family: var(--mono);
@@ -256,15 +295,44 @@ html, body {
 .bottom-hint {
   font-family: var(--mono);
   font-size: 0.7rem;
-  color: #999;
+  color: var(--muted);
   margin-top: 12px;
   display: flex;
   gap: 16px;
+  justify-content: space-between;
+  align-items: center;
 }
+.hint-right { display: flex; gap: 16px; }
+
 .hint-link {
   background: none; border: none; font-family: inherit;
   font-size: inherit; color: var(--fg); cursor: pointer;
   text-decoration: underline;
+}
+
+/* Theme Toggle */
+.theme-toggle {
+  position: fixed;
+  bottom: 24px;
+  left: 24px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--fg);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.2s, transform 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+.theme-toggle:hover { 
+  opacity: 1; 
+  transform: scale(1.1);
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }
@@ -275,5 +343,6 @@ html, body {
   .bottom-wrap { padding: 16px; }
   .compose-textarea { font-size: 1rem; }
 }
+
 
 

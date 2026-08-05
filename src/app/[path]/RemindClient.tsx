@@ -62,6 +62,39 @@ interface ActiveReminder { content: string; fireAt: number; }
 // ── Component ─────────────────────────────────────────────────────────────────
 interface Props { path: string; initialContent: string; }
 
+const AlignLeftIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="17" y1="10" x2="3" y2="10"></line>
+    <line x1="21" y1="6" x2="3" y2="6"></line>
+    <line x1="21" y1="14" x2="3" y2="14"></line>
+    <line x1="17" y1="18" x2="3" y2="18"></line>
+  </svg>
+);
+const AlignCenterIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="18" y1="10" x2="6" y2="10"></line>
+    <line x1="21" y1="6" x2="3" y2="6"></line>
+    <line x1="21" y1="14" x2="3" y2="14"></line>
+    <line x1="18" y1="18" x2="6" y2="18"></line>
+  </svg>
+);
+const AlignRightIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="21" y1="10" x2="7" y2="10"></line>
+    <line x1="21" y1="6" x2="3" y2="6"></line>
+    <line x1="21" y1="14" x2="3" y2="14"></line>
+    <line x1="21" y1="18" x2="7" y2="18"></line>
+  </svg>
+);
+const AlignJustifyIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="21" y1="10" x2="3" y2="10"></line>
+    <line x1="21" y1="6" x2="3" y2="6"></line>
+    <line x1="21" y1="14" x2="3" y2="14"></line>
+    <line x1="21" y1="18" x2="3" y2="18"></line>
+  </svg>
+);
+
 export default function RemindClient({ path, initialContent }: Props) {
   const storageKey = `remnd_active_${path}`;
 
@@ -76,6 +109,8 @@ export default function RemindClient({ path, initialContent }: Props) {
   const [countdown, setCountdown]     = useState("--:--:--");
   const [clipSavedAt, setClipSavedAt] = useState<number | null>(null);
   const [clipLoaded, setClipLoaded]   = useState(!!initialContent);
+  const [theme, setTheme]             = useState<"light" | "dark">("light");
+  const [textAlign, setTextAlign]     = useState<"left" | "center" | "right" | "justify" | null>(null);
   const [, tick]                      = useState(0);
 
   const timerRef    = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -84,6 +119,25 @@ export default function RemindClient({ path, initialContent }: Props) {
   const autoResize = (el: HTMLTextAreaElement) => {
     el.style.height = "auto";
     el.style.height = el.scrollHeight + "px";
+  };
+
+  // ── Theme Management ──────────────────────────────────────────────────────
+  useEffect(() => {
+    const saved = localStorage.getItem("remnd_theme") as "light" | "dark";
+    if (saved) {
+      setTheme(saved);
+      document.documentElement.setAttribute("data-theme", saved);
+    } else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+      setTheme("dark");
+      document.documentElement.setAttribute("data-theme", "dark");
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    const next = theme === "light" ? "dark" : "light";
+    setTheme(next);
+    document.documentElement.setAttribute("data-theme", next);
+    localStorage.setItem("remnd_theme", next);
   };
 
   // Resize on initial load if there's loaded content
@@ -248,7 +302,16 @@ export default function RemindClient({ path, initialContent }: Props) {
       <header className="topbar">
         <div className="topbar-inner">
           <span className="logo">remnd<span className="slug">.com/{path}</span></span>
-          {savedHint && <span className="topbar-right">{savedHint}</span>}
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            {savedHint && <span className="topbar-right">{savedHint}</span>}
+            <div className="align-controls">
+              <button type="button" className={`align-btn ${textAlign === "left" || (!textAlign && isLong) ? "active" : ""}`} onClick={() => setTextAlign("left")} title="Align Left"><AlignLeftIcon /></button>
+              <button type="button" className={`align-btn ${textAlign === "center" || (!textAlign && !isLong) ? "active" : ""}`} onClick={() => setTextAlign("center")} title="Align Center"><AlignCenterIcon /></button>
+              <button type="button" className={`align-btn ${textAlign === "right" ? "active" : ""}`} onClick={() => setTextAlign("right")} title="Align Right"><AlignRightIcon /></button>
+              <button type="button" className={`align-btn ${textAlign === "justify" ? "active" : ""}`} onClick={() => setTextAlign("justify")} title="Justify"><AlignJustifyIcon /></button>
+            </div>
+          </div>
         </div>
       </header>
 
@@ -291,6 +354,7 @@ export default function RemindClient({ path, initialContent }: Props) {
               setContent(e.target.value);
               autoResize(e.target);
             }}
+            style={textAlign ? { textAlign } : {}}
             disabled={loading}
             autoFocus={!initialContent}
           />
@@ -311,29 +375,12 @@ export default function RemindClient({ path, initialContent }: Props) {
             autoComplete="off"
           />
 
-          {/* Show visual feedback for parsed natural language date */}
-          {delayRaw.trim() && parsedDate && (
-             <span className="date-hint" style={{ fontSize: "0.75rem", display: "block", color: delayErr ? "var(--error)" : "var(--fg)", opacity: 0.7, marginTop: 4 }}>
-                {parsedDate.getTime() <= Date.now() 
-                  ? "Date must be in the future"
-                  : parsedDate.getTime() > Date.now() + 7 * 24 * 3600 * 1000
-                    ? "Max reminder limit is 7 days"
-                    : `Reminding: ${new Intl.DateTimeFormat('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }).format(parsedDate)}`}
-             </span>
-          )}
-          {delayRaw.trim() && !parsedDate && delayErr && (
-            <span className="date-hint" style={{ fontSize: "0.75rem", display: "block", color: "var(--error)", opacity: 0.7, marginTop: 4 }}>
-                Invalid time format
-            </span>
-          )}
-
           {/* Show enable-notifications chip inline when delay is typed + not yet granted */}
           {delayRaw.trim() && !delayErr && notifStatus !== "granted" && notifStatus !== "denied" && (
             <button
               type="button"
               className="notif-chip"
               id="enable-notifications"
-              style={{ marginTop: 8 }}
               onClick={async () => {
                 const sub = await getSubscription();
                 if (sub) setNotifStatus("granted");
@@ -344,7 +391,7 @@ export default function RemindClient({ path, initialContent }: Props) {
             </button>
           )}
           {delayRaw.trim() && notifStatus === "denied" && (
-            <span style={{ fontSize: "0.7rem", color: "var(--error)", flexShrink: 0, whiteSpace: "nowrap", marginTop: 8, display: "block" }}>
+            <span style={{ fontSize: "0.7rem", color: "var(--error)", flexShrink: 0, whiteSpace: "nowrap" }}>
               Notifications blocked
             </span>
           )}
@@ -354,17 +401,55 @@ export default function RemindClient({ path, initialContent }: Props) {
             id="create-btn"
             className="btn-create"
             disabled={!canCreate || (!!delayRaw.trim() && delayErr)}
-            style={{ marginTop: 8 }}
           >
             {loading ? <><span className="spinner" />Saving…</> : "Create"}
           </button>
         </form>
 
-        <div className="bottom-hint">
-          {clipLoaded
-            ? <><span>{savedHint ?? "Synced to this URL"}</span><button className="hint-link" onClick={handleClear}>Clear</button></>
-            : <span>Save syncs to this URL — open on any device to access</span>
-          }
+        <button className="theme-toggle" type="button" onClick={toggleTheme} title="Toggle theme" aria-label="Toggle dark mode">
+          {theme === "light" ? (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+          ) : (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="5"></circle>
+              <line x1="12" y1="1" x2="12" y2="3"></line>
+              <line x1="12" y1="21" x2="12" y2="23"></line>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+              <line x1="1" y1="12" x2="3" y2="12"></line>
+              <line x1="21" y1="12" x2="23" y2="12"></line>
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+            </svg>
+          )}
+        </button>
+
+        <div style={{ minHeight: "18px", marginTop: "4px", paddingLeft: "4px" }}>
+          {delayRaw.trim() && parsedDate && (
+             <span className="date-hint" style={{ fontSize: "0.75rem", color: delayErr ? "var(--error)" : "var(--fg)", opacity: 0.7 }}>
+                {parsedDate.getTime() <= Date.now() 
+                  ? "Date must be in the future"
+                  : parsedDate.getTime() > Date.now() + 7 * 24 * 3600 * 1000
+                    ? "Max reminder limit is 7 days"
+                    : `Reminding: ${new Intl.DateTimeFormat('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }).format(parsedDate)}`}
+             </span>
+          )}
+          {delayRaw.trim() && !parsedDate && delayErr && (
+            <span className="date-hint" style={{ fontSize: "0.75rem", color: "var(--error)", opacity: 0.7 }}>
+                Invalid time format
+            </span>
+          )}
+        </div>
+
+        <div className="bottom-hint" style={{ justifyContent: "flex-end" }}>
+          <div className="hint-right">
+            {clipLoaded
+              ? <><span>{savedHint ?? "Synced to this URL"}</span><button className="hint-link" onClick={handleClear}>Clear</button></>
+              : <span>Save syncs to this URL — open on any device to access</span>
+            }
+          </div>
         </div>
       </div>
     </div>
