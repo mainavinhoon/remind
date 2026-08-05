@@ -110,11 +110,28 @@ export default function RemindClient({ path, initialContent }: Props) {
   const [clipSavedAt, setClipSavedAt] = useState<number | null>(null);
   const [clipLoaded, setClipLoaded]   = useState(!!initialContent);
   const [theme, setTheme]             = useState<"light" | "dark">("light");
-  const [textAlign, setTextAlign]     = useState<"left" | "center" | "right" | "justify" | null>(null);
+  const [textAlign, setTextAlign]     = useState<"left" | "center" | "right" | "justify" | null>("justify");
   const [, tick]                      = useState(0);
+  const [typedText, setTypedText]     = useState("");
+  const [cursorOn, setCursorOn]       = useState(true);
 
   const timerRef    = useRef<ReturnType<typeof setInterval> | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // ── Typewriter effect for placeholder ────────────────────────────────────
+  useEffect(() => {
+    const FULL = "Whatever you've got, I've got you. So Drop Anything Here";
+    let i = 0;
+    setTypedText("");
+    const typing = setInterval(() => {
+      i++;
+      setTypedText(FULL.slice(0, i));
+      if (i >= FULL.length) clearInterval(typing);
+    }, 45);
+    // Blink cursor
+    const blink = setInterval(() => setCursorOn(v => !v), 530);
+    return () => { clearInterval(typing); clearInterval(blink); };
+  }, []);
 
   const autoResize = (el: HTMLTextAreaElement) => {
     el.style.height = "auto";
@@ -336,11 +353,10 @@ export default function RemindClient({ path, initialContent }: Props) {
         {msg && <p className={`status-msg ${msg.type}`}>{msg.text}</p>}
 
         {/* Writing area centered */}
-        <div className="compose">
+        <div className="compose" onClick={() => textareaRef.current?.focus()}>
           {!content && (
             <div className="compose-placeholder">
-              Whatever you've got, I've got you.
-              So Drop Anything Here
+              {typedText}<span style={{ opacity: cursorOn ? 1 : 0 }}>|</span>
             </div>
           )}
           <textarea
@@ -354,7 +370,7 @@ export default function RemindClient({ path, initialContent }: Props) {
               setContent(e.target.value);
               autoResize(e.target);
             }}
-            style={textAlign ? { textAlign } : {}}
+            style={{ ...(textAlign ? { textAlign } : {}), caretColor: content ? "var(--fg)" : "transparent" }}
             disabled={loading}
             autoFocus={!initialContent}
           />

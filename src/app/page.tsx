@@ -32,7 +32,7 @@ export default function HomePage() {
       padding: "24px" 
     }}>
       <p style={{ fontSize: "0.8rem", fontWeight: 700, position: "fixed", top: "20px" }}>
-        remnd.com
+        remnd.in
       </p>
 
       <h1 style={{ fontSize: "1.4rem", fontWeight: 400, color: "#000", textAlign: "center", marginBottom: "32px", letterSpacing: "-0.01em" }}>
@@ -41,7 +41,7 @@ export default function HomePage() {
 
       <div style={{ border: "2px solid #000", padding: "16px", width: "100%", maxWidth: "480px" }}>
         <p style={{ fontSize: "0.75rem", color: "#666", marginBottom: "8px" }}>
-          remnd.com/<span style={{ color: slug ? "#000" : "#ccc" }}>{preview}</span>
+          remnd.in/<span style={{ color: slug ? "#000" : "#ccc" }}>{preview}</span>
         </p>
 
         <form 

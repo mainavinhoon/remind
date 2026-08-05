@@ -6,7 +6,7 @@
   --muted:       #666666;
   --subtle:      #999999;
   --border:      #000000; /* Sharp black borders */
-  --accent:      #0052cc; /* Developer blue */
+  --accent:      #000000; /* Black, keeps it B&W */
   --accent-bg:   #f0f7ff;
   --error:       #d73a49;
   --mono: "JetBrains Mono", "Fira Mono", "Roboto Mono", monospace;
@@ -16,10 +16,10 @@
 [data-theme='dark'] {
   --bg:          #0e0e0e;
   --fg:          #efefef;
-  --muted:       #888888;
-  --subtle:      #666666; /* Lightened to make placeholder visible */
+  --muted:       #b7b7b7; /* was #888, bumped up for readability */
+  --subtle:      #b3b1b1; /* was #666, bumped up so placeholders are visible */
   --border:      #efefef;
-  --accent:      #58a6ff;
+  --accent:      #e8eaed;
   --accent-bg:   #161b22;
   --error:       #f85149;
 }
@@ -121,6 +121,14 @@ html, body {
 /* Active reminder (Minimalist Box) */
 .bubble-wrap { margin-bottom: 32px; }
 
+.cursor-blink {
+  display: block;
+  margin-top: 8px;
+  color: var(--fg);
+  font-weight: 300;
+  animation: blink 1s step-start infinite;
+}
+
 .bubble {
   display: inline-block;
   background: var(--bg);
@@ -190,6 +198,19 @@ html, body {
   font-size: 1.2rem;
   color: var(--subtle);
   user-select: none;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+.cursor-blink {
+  display: block;
+  margin-top: 8px;
+  color: var(--fg);
+  font-weight: 300;
+  animation: blink 1s step-start infinite;
 }
 
 .compose-textarea {
@@ -268,20 +289,21 @@ html, body {
 .notif-chip:hover { opacity: 0.8; }
 .notif-chip .ndot { width: 5px; height: 5px; background: var(--bg); border-radius: 50%; }
 
-/* Create Button (Brutalist) */
+/* Create Button (Outline) */
 .btn-create {
   font-family: var(--mono);
   font-size: 0.8rem;
   font-weight: 700;
-  color: #fff;
-  background: var(--accent);
-  border: none;
+  color: var(--accent);
+  background: transparent;
+  border: 1.5px solid var(--accent);
   padding: 8px 24px;
   cursor: pointer;
   text-transform: uppercase;
+  transition: background 0.15s, color 0.15s;
 }
-.btn-create:hover:not(:disabled) { background: #0044aa; }
-.btn-create:disabled { background: var(--subtle); color: var(--muted); cursor: not-allowed; opacity: 0.3; }
+.btn-create:hover:not(:disabled) { background: var(--accent); color: var(--bg); }
+.btn-create:disabled { border-color: var(--subtle); color: var(--subtle); cursor: not-allowed; opacity: 0.4; }
 
 .status-msg {
   font-family: var(--mono);
